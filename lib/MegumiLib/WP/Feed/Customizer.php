@@ -1,6 +1,6 @@
 <?php
 namespace MegumiLib\WP\Feed;
-class Custom_Feed {
+class Customizer {
 	private $feed_name;
 	private $categories = array();
 	private $revision_key;
