@@ -8,7 +8,7 @@
         {
             "name": "Takahiro Horike",
             "email": "horike@digitalcube.jp"
-        },
+        }
     ],
     "autoload": {
         "psr-0": {
