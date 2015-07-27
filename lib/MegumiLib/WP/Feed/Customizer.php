@@ -6,17 +6,12 @@ class Customizer {
 	private $revision_key;
 	private $status_key;
 	private $feed_file;
-	private $revision_first_value = 1;
-	private $status               = array(
-								'create' => 1,
-								'update' => 2,
-								'delete' => 3
-								);
+	private $revision_first_value;
+	private $status = array();
+	private $metabox_type = 'checkbox';
 
 	public function __construct( $feed_name, $feed_file ) {
 		$this->feed_name    = $feed_name;
-		$this->revision_key = '_' . $this->feed_name . '_revision_id';
-		$this->status_key   = '_' . $this->feed_name . '_feed_status';
 		$this->feed_file    = $feed_file;
 		
 	}
@@ -33,28 +28,50 @@ class Customizer {
 
 	public function init() {
 		add_action( 'init'               , array( $this, 'init' ) );
-		add_action( 'save_post'          , array( $this, 'post_revision' ), 10, 2 );
-		add_action( 'publish_post'       , array( $this, 'post_status' ) );
-		add_action( 'save_post'          , array( $this, 'private_post' ), 10, 2 );
-		add_action( 'wp_trash_post'      , array( $this, 'trash_feed_status' ) );
 		add_action( 'pre_get_posts'      , array( $this, 'exclude_category' ) );
 		add_filter( 'the_content'        , array( $this, 'strip_related_post' ) );
 		add_filter( 'template_redirect'  , array( $this, 'template_redirect' ) );
 		add_filter( 'query_vars'         , array( $this, 'query_vars' ) );
 		
 		if ( $this->get_categories() ) {
-			add_action( 'add_meta_boxes', function(){
-				add_meta_box(
-					'Custom_feed' . $this->feed_name,
-					$this->feed_name . ' Category',
-					array( $this, 'add_meta_boxes' ),
-					'post',
-					'side'
-				);
-			} );
+			if ( $this->metabox_type === 'checkbox' ) {
+				add_action( 'add_meta_boxes', function(){
+					add_meta_box(
+						'Custom_feed' . $this->feed_name,
+						$this->feed_name . ' Category',
+						array( $this, 'add_meta_boxes_cb' ),
+						'post',
+						'side'
+					);
+				} );
+				
+			} elseif ( $this->metabox_type === 'radio' ) {
+				add_action( 'add_meta_boxes', function(){
+					add_meta_box(
+						'Custom_feed' . $this->feed_name,
+						$this->feed_name . ' Category',
+						array( $this, 'add_meta_boxes_rd' ),
+						'post',
+						'side'
+					);
+				} );
+			}
 			add_action( 'save_post', array( $this, 'save_post' ) );
 		}
 		add_feed( $this->feed_name, array( $this, 'do_feed' ) );
+		
+		if ( $this->get_status() && array_key_exists( 'create', $this->get_status() )
+				&& array_key_exists( 'update', $this->get_status() ) && array_key_exists( 'delete', $this->get_status() ) ) {
+			$this->status_key   = '_' . $this->feed_name . '_feed_status';
+			add_action( 'wp_trash_post', array( $this, 'trash_feed_status' ) );
+			add_action( 'publish_post' , array( $this, 'post_status' ) );
+			add_action( 'save_post'    , array( $this, 'private_post' ), 10, 2 );
+		}
+
+		if ( $this->get_revision_first_value() && is_numeric( $this->get_revision_first_value() ) ) {
+			$this->revision_key = '_' . $this->feed_name . '_revision_id';
+			add_action( 'save_post', array( $this, 'post_revision' ), 10, 2 );
+		}
 	}
 
 	public function query_vars( $vars )
@@ -138,26 +155,6 @@ class Customizer {
 		}
 		return $content;
 	}
-	public function get_status($post_id) {
-		$status = get_post_meta( $post_id, $this->status_key, true );
-		if ( $status === '' ) {
-			$post = get_post($post_id);
-			if ( is_object($post) && ( $post->post_status === 'trash' || $post->post_status === 'private' ) ) {
-				$status = $this->status['delete'];
-			} else {
-				$status = $this->status['create'];
-			}
-			
-		}
-		return $status;
-	}
-	public function get_revision($post_id) {
-		$revision = get_post_meta( $post_id, $this->revision_key, true );
-		if ( $revision === '' ) {
-			$revision = $this->revision_first_value;
-		}
-		return $revision;
-	}
 	
 	public function save_post( $post_id ) {
 
@@ -180,7 +177,7 @@ class Customizer {
 		update_post_meta( $post_id, '_custom_feed_category_' . $this->feed_name,  $_POST['custom_feed_category_' . $this->feed_name] );
 	}
 
-	public function add_meta_boxes( $post ) {
+	public function add_meta_boxes_cb( $post ) {
 		wp_nonce_field( 'custom_feed_category_' . $this->feed_name, 'custom_feed_category_nonce_' . $this->feed_name );
 		$value = get_post_meta( $post->ID, '_custom_feed_category_' . $this->feed_name, true );
 
@@ -197,11 +194,45 @@ class Customizer {
 		echo '</ul>';
 	}
 
-	public function set_categories( $categories ) {
+	public function add_meta_boxes_rd( $post ) {
+		wp_nonce_field( 'custom_feed_category_' . $this->feed_name, 'custom_feed_category_nonce_' . $this->feed_name );
+		$value = get_post_meta( $post->ID, '_custom_feed_category_' . $this->feed_name, true );
+
+		echo '<ul>';
+		foreach ( $this->get_categories() as $key => $cat ) {
+			printf(
+				'<li><label><input type="radio" name="%1$s" value="%2$s" %4$s /> %3$s</label></li>',
+				esc_attr('custom_feed_category_' . $this->feed_name),
+				esc_attr($key),
+				esc_html($cat),
+				( isset($value) && $value === $key ) ? 'checked="checked"' : ''
+			);
+		}
+		echo '</ul>';
+	}
+
+	public function set_categories( $categories, $metabox_type = 'checkbox' ) {
 		$this->categories = $categories;
+		$this->metabox_type = $metabox_type;
 	}
 
 	public function get_categories() {
 		return $this->categories;
+	}
+
+	public function set_status( $status ) {
+		$this->status = $status;
+	}
+
+	public function get_status() {
+		return $this->status;
+	}
+
+	public function set_revision_first_value( $revision ) {
+		$this->revision_first_value = $revision;
+	}
+
+	public function get_revision_first_value() {
+		return $this->revision_first_value;
 	}
 }
