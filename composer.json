@@ -11,8 +11,8 @@
         }
     ],
     "autoload": {
-        "psr-0": {
-            "Megumi\WP\Feed": "lib/"
+        "psr-4": {
+            "Megumi": "lib/"
         }
     }
 }
