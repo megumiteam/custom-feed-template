@@ -111,7 +111,7 @@ class Customizer {
 		update_post_meta($post_id, $this->status_key, $this->status['delete']);
 	}
 	public function exclude_category( $query ) {
-		if ( $query->is_main_query() && $query->is_feed( $this->feed_name ) ) {
+		if ( $query->is_main_query() && $this->is_custom_feed() ) {
 			$cat = get_category_by_slug('pr');
 			if ( $cat ) {
 				$query->set( 'category__not_in', array($cat->term_id) );
@@ -119,7 +119,7 @@ class Customizer {
 		}
 	}
 	public function strip_related_post( $content ) {
-		if ( !is_admin() && is_feed( $this->feed_name ) ) {
+		if ( $this->is_custom_feed() ) {
 			$content = trim(preg_replace(
 				'/^(.*)<p>【関連記事】.*$/ims' ,
 				'$1',
