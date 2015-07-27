@@ -1,5 +1,5 @@
 {
-    "name": "megumi-feed/custom-feed-template",
+    "name": "megumilib/custom-feed-template",
     "license": "GPL2",
     "require": {
         "php": ">=5.3"
@@ -12,7 +12,7 @@
     ],
     "autoload": {
         "psr-4": {
-            "Megumi": "lib/"
+            "MegumiLib": "lib/"
         }
     }
 }

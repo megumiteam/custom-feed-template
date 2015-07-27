@@ -1,5 +1,5 @@
 <?php
-namespace Megumi\WP\Feed;
+namespace MegumiLib\WP\Feed;
 class Custom_Feed {
 	private $feed_name;
 	private $categories = array();

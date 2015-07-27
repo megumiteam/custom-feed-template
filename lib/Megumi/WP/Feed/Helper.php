@@ -1,5 +1,5 @@
 <?php
-namespace Megumi\WP\Feed;
+namespace MegumiLib\WP\Feed;
 class Helper {
 	private static $instance = null;
 
