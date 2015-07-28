@@ -1,6 +1,6 @@
 <?php
 
-use MegumiLib\WP\Feed;
+use Megumi\WP\Feed;
 
 class Customizer_Test extends WP_UnitTestCase {
 

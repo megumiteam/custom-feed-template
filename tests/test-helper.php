@@ -1,5 +1,5 @@
 <?php
-use MegumiLib\WP\Feed;
+use Megumi\WP\Feed;
 
 class Helper_Test extends WP_UnitTestCase {
 
