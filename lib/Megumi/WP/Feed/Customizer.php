@@ -33,7 +33,7 @@ class Customizer {
 		add_filter( 'template_redirect'  , array( $this, 'template_redirect' ) );
 		add_filter( 'query_vars'         , array( $this, 'query_vars' ) );
 		
-		if ( $this->get_categories() ) {
+		if ( $this->get_categories() && ( current_user_can('administrator') || current_user_can('editor') ) ) {
 			if ( $this->metabox_type === 'checkbox' ) {
 				add_action( 'add_meta_boxes', function(){
 					add_meta_box(
